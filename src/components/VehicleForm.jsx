@@ -1,4 +1,6 @@
 import { Controller, useForm } from "react-hook-form";
+import Snackbar from '@mui/material/Snackbar';
+import MuiAlert from '@mui/material/Alert';
 import {
   TextField,
   Button,
@@ -30,6 +32,9 @@ const VehicleForm = () => {
   const [formDataArray, setFormDataArray] = useState([]);
   const [editData, setEditData] = useState(null);
   const navigate = useNavigate();
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [successMessage,setSuccessMessage] =useState()
+  const [severity,setSeverity] = useState(null)
   const {
     control,
     watch,
@@ -63,7 +68,7 @@ const VehicleForm = () => {
           navigate("/addvehicle");
         }
         // Redirect to error page if ID is negative
-        if (parseInt(id, 10) < 0) {
+        if (parseInt(id, 10) <=0) {
           navigate("/error"); // Update this path based on your error page route
         }
       }
@@ -91,37 +96,46 @@ const VehicleForm = () => {
     }
   }, [id, setValue]);
 
+ 
+  const handleSnackbarClose = (event, reason) => {
+    if (reason === 'clickaway') {
+      return;
+    }
+    setSnackbarOpen(false);
+  };
+
+  const showSnackbar = (message, severity) => {
+    setSuccessMessage(message);
+    setSnackbarOpen(true);
+    setSeverity(severity)
+    setTimeout(() => {
+      // Navigate to the listing page after 2000 milliseconds (2 seconds)
+      navigate("/listing");
+    }, 2000);
+  };
+
   const onSubmit = (data) => {
-    // Check if the form is valid
     if (Object.keys(errors).length === 0) {
       if (editData) {
-        // Handle edit case (update data)
         const updatedDataArray = formDataArray.map((item, index) =>
           index === parseInt(id - 1, 10) ? { ...item, ...data } : item
         );
         localStorage.setItem("formData", JSON.stringify(updatedDataArray));
-        setFormDataArray(updatedDataArray);  
-        // Show success message for edit
-        alert("Form is successfully updated!");
+        setFormDataArray(updatedDataArray);
+        showSnackbar("Form is successfully updated!", 'info');
       } else {
-        // Handle add new case
         const newDataArray = [
           ...formDataArray,
           { id: Date.now().toString(), ...data },
         ];
         localStorage.setItem("formData", JSON.stringify(newDataArray));
         setFormDataArray(newDataArray);
-        // Show success message for new submission
-        alert("Form is successfully submitted!");
-      }  
-      // Navigate to the listing page
-      navigate("/listing");
+        showSnackbar("Form is successfully submitted!", 'success');
+      }
     } else {
-      // Show an alert for form validation errors
       alert("Please fix the errors in the form before submitting.");
     }
   };
-  
   
   const handleClear = () => {
     // Use the reset function to clear the form values and errors
@@ -530,6 +544,20 @@ const VehicleForm = () => {
             >
               Submit
             </Button>
+            <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={6000}
+        onClose={handleSnackbarClose}
+      >
+        <MuiAlert
+          elevation={6}
+          variant="filled"
+          onClose={handleSnackbarClose}
+          severity={severity} // Use the severity from the state
+        >
+          {successMessage}
+        </MuiAlert>
+      </Snackbar>
             <Button
               type="button"
               variant="contained"
