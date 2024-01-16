@@ -1,6 +1,6 @@
 import { Controller, useForm } from "react-hook-form";
-import Snackbar from '@mui/material/Snackbar';
-import MuiAlert from '@mui/material/Alert';
+import Snackbar from "@mui/material/Snackbar";
+import MuiAlert from "@mui/material/Alert";
 import {
   TextField,
   Button,
@@ -27,14 +27,13 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 const VehicleForm = () => {
-
   const { id } = useParams(); // Get the ID from the URL parameters
   const [formDataArray, setFormDataArray] = useState([]);
   const [editData, setEditData] = useState(null);
   const navigate = useNavigate();
   const [snackbarOpen, setSnackbarOpen] = useState(false);
-  const [successMessage,setSuccessMessage] =useState()
-  const [severity,setSeverity] = useState(null)
+  const [successMessage, setSuccessMessage] = useState();
+  const [severity, setSeverity] = useState(null);
   const {
     control,
     watch,
@@ -46,35 +45,35 @@ const VehicleForm = () => {
   } = useForm({
     resolver: yupResolver(VehicleDataValidation),
   });
-  const manufacturedYear = watch("manufacturedYear")
-  const vehicleBodyType = watch("vehicleBodyType")
-  const transmission = watch("transmission")
-  const wheeler = watch("wheeler")
-  const isAgree = watch("isAgree")
+  const manufacturedYear = watch("manufacturedYear");
+  const vehicleBodyType = watch("vehicleBodyType");
+  const transmission = watch("transmission");
+  const wheeler = watch("wheeler");
+  const isAgree = watch("isAgree");
   useEffect(() => {
     const storedData = JSON.parse(localStorage.getItem("formData")) || [];
     setFormDataArray(storedData);
-
     // Check if ID is provided in the URL (edit case)
     if (id) {
       const editFormData = storedData.find(
         (data, index) => index === parseInt(id - 1, 10)
       );
-
       if (!editFormData) {
         // Show an alert if ID is greater than available data
         if (parseInt(id, 10) > storedData.length) {
-          alert("Invalid ID! ID exceeds available data.");
-          navigate("/addvehicle");
+          showSnackbar("Invalid ID !, ID exceeds available data.", "error");
+          const snackbarDuration = 2000;
+          setTimeout(() => {
+            navigate("/addvehicle");
+          }, snackbarDuration);
         }
         // Redirect to error page if ID is negative
-        if (parseInt(id, 10) <=0) {
+        if (parseInt(id, 10) <= 0) {
           navigate("/error"); // Update this path based on your error page route
         }
       }
       if (editFormData) {
         setEditData(editFormData);
-
         // Use setValue to set the form values
         Object.keys(editFormData).forEach((key) => {
           if (
@@ -96,9 +95,8 @@ const VehicleForm = () => {
     }
   }, [id, setValue]);
 
- 
   const handleSnackbarClose = (event, reason) => {
-    if (reason === 'clickaway') {
+    if (reason === "clickaway") {
       return;
     }
     setSnackbarOpen(false);
@@ -107,7 +105,7 @@ const VehicleForm = () => {
   const showSnackbar = (message, severity) => {
     setSuccessMessage(message);
     setSnackbarOpen(true);
-    setSeverity(severity)
+    setSeverity(severity);
     setTimeout(() => {
       // Navigate to the listing page after 2000 milliseconds (2 seconds)
       navigate("/listing");
@@ -122,21 +120,21 @@ const VehicleForm = () => {
         );
         localStorage.setItem("formData", JSON.stringify(updatedDataArray));
         setFormDataArray(updatedDataArray);
-        showSnackbar("Form is successfully updated!", 'info');
+        showSnackbar("Form is successfully updated !", "info");
       } else {
         const newDataArray = [
           ...formDataArray,
-          { id: Date.now().toString(), ...data },
+          {...data },
         ];
         localStorage.setItem("formData", JSON.stringify(newDataArray));
         setFormDataArray(newDataArray);
-        showSnackbar("Form is successfully submitted!", 'success');
+        showSnackbar("Form is successfully submitted !", "success");
       }
     } else {
       alert("Please fix the errors in the form before submitting.");
     }
   };
-  
+
   const handleClear = () => {
     // Use the reset function to clear the form values and errors
     reset();
@@ -144,7 +142,7 @@ const VehicleForm = () => {
 
   return (
     <>
-      <Container component="main" style={{ marginTop: 20 }} >
+      <Container component="main" style={{ marginTop: 20 }}>
         <Paper
           elevation={3}
           style={{
@@ -261,7 +259,7 @@ const VehicleForm = () => {
                 <Select
                   fullWidth
                   defaultValue={0}
-                  value={vehicleBodyType?vehicleBodyType:0}
+                  value={vehicleBodyType ? vehicleBodyType : 0}
                   id="vehicle-body-type"
                   {...register("vehicleBodyType")}
                   error={errors.vehicleBodyType ? true : false}
@@ -295,7 +293,7 @@ const VehicleForm = () => {
                   labelid="manufactured-year-label"
                   id="manufactured-year"
                   defaultValue={0}
-                  value={manufacturedYear ? manufacturedYear:0}
+                  value={manufacturedYear ? manufacturedYear : 0}
                   {...register("manufacturedYear")}
                   error={errors.manufacturedYear ? true : false}
                 >
@@ -324,7 +322,7 @@ const VehicleForm = () => {
                 <Select
                   fullWidth
                   defaultValue={0}
-                  value={transmission?transmission:0}
+                  value={transmission ? transmission : 0}
                   labelid="transmission-label"
                   id="transmission"
                   {...register("transmission")}
@@ -423,22 +421,22 @@ const VehicleForm = () => {
                     Types of vehicles :
                   </Typography>
                   <FormControlLabel
-                  value="4 Wheeler"
+                    value="4 Wheeler"
                     control={<Checkbox {...register("wheeler")} />}
                     label="4 Wheeler"
-                    checked={wheeler?wheeler.includes("4 Wheeler"):false}
+                    checked={wheeler ? wheeler.includes("4 Wheeler") : false}
                   />
                   <FormControlLabel
-                  value="3 Wheeler"
+                    value="3 Wheeler"
                     control={<Checkbox {...register("wheeler")} />}
                     label="3 Wheeler"
-                    checked={wheeler?wheeler.includes("3 Wheeler"):false}
+                    checked={wheeler ? wheeler.includes("3 Wheeler") : false}
                   />
                   <FormControlLabel
-                  value="2 Wheeler"
+                    value="2 Wheeler"
                     control={<Checkbox {...register("wheeler")} />}
                     label="2 Wheeler"
-                    checked={wheeler?wheeler.includes("2 Wheeler"):false}
+                    checked={wheeler ? wheeler.includes("2 Wheeler") : false}
                   />
                 </FormGroup>
               </Grid>
@@ -511,14 +509,11 @@ const VehicleForm = () => {
                   <FormControlLabel
                     control={
                       <Checkbox
-                        {...register("isAgree") }   
-                        checked={isAgree === true}                    
-                        // Remove error prop from Checkbox                        
+                        {...register("isAgree")}
+                        checked={isAgree === true}
+                        // Remove error prop from Checkbox
                       />
-                      
                     }
-                   
-                   
                     label={
                       <span>
                         I agree to the terms & condition
@@ -545,19 +540,20 @@ const VehicleForm = () => {
               Submit
             </Button>
             <Snackbar
-        open={snackbarOpen}
-        autoHideDuration={6000}
-        onClose={handleSnackbarClose}
-      >
-        <MuiAlert
-          elevation={6}
-          variant="filled"
-          onClose={handleSnackbarClose}
-          severity={severity} // Use the severity from the state
-        >
-          {successMessage}
-        </MuiAlert>
-      </Snackbar>
+              open={snackbarOpen}
+              autoHideDuration={6000}
+              onClose={handleSnackbarClose}
+              anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+            >
+              <MuiAlert
+                elevation={6}
+                variant="filled"
+                onClose={handleSnackbarClose}
+                severity={severity} // Use the severity from the state
+              >
+                {successMessage}
+              </MuiAlert>
+            </Snackbar>
             <Button
               type="button"
               variant="contained"

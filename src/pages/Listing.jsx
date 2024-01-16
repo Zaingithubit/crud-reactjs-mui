@@ -18,6 +18,8 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
+  Box,
+  TextField,
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -45,7 +47,14 @@ const Listing = () => {
   const [tableData, setTableData] = useState([]);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedDeleteId, setSelectedDeleteId] = useState(null);
+  //  this state is use for searching the data
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filteredData, setFilteredData] = useState(tableData);
 
+  const handleSearchChange = (event) => {
+    const { value } = event.target;
+    setSearchQuery(value);
+  };
   useEffect(() => {
     // Retrieve data from local storage or use default data
     const storedData = JSON.parse(localStorage.getItem("formData"));
@@ -53,6 +62,15 @@ const Listing = () => {
       setTableData(storedData);
     }
   }, []);
+  useEffect(() => {
+    // Filter the data based on search query
+    const filtered = tableData.filter((item) =>
+      Object.values(item).some((value) =>
+        value.toString().toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    );
+    setFilteredData(filtered);
+  }, [searchQuery, tableData]);
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
@@ -62,7 +80,6 @@ const Listing = () => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
   };
-
   const handleEdit = (id) => {
     console.log(`Editing row with ID: ${id}`);
     navigate(`/addvehicle/${id}`);
@@ -90,7 +107,7 @@ const Listing = () => {
 
   return (
     <div>
-      <Container>
+      <Box sx={{ m: 5 }}>
         <Typography
           variant="h4"
           sx={{ my: 3 }}
@@ -99,6 +116,18 @@ const Listing = () => {
         >
           Vehicles List
         </Typography>
+
+        {/* Search Input Fields */}
+        <Box sx={{ mb: 3 }}>
+          <TextField
+            label="Search by Make"
+            variant="outlined"
+            size="small"
+            value={searchQuery}
+            onChange={handleSearchChange}
+          />
+          {/* Add more search fields for other columns as needed */}
+        </Box>
         <Paper>
           <TableContainer
             component={Paper}
@@ -132,12 +161,12 @@ const Listing = () => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {tableData
+                {filteredData
                   .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                   .map((item, index) => {
                     const rowNumber = index + 1 + page * rowsPerPage;
                     return (
-                      <TableRow key={rowNumber}>
+                      <TableRow key={rowNumber} >
                         <TableCell>{rowNumber}</TableCell>
                         <TableCell>{item.make}</TableCell>
                         <TableCell>{item.model}</TableCell>
@@ -149,10 +178,9 @@ const Listing = () => {
                         <TableCell>{item.odometerReading}</TableCell>
                         <TableCell>{item.regExpiry}</TableCell>
                         <TableCell>{item.licensePlate}</TableCell>
-                        <TableCell>{item.wheeler}</TableCell>
-
-                        <TableCell style={{ display: "flex" }}>
-                          <IconButton
+                        <TableCell >{item.wheeler ? item.wheeler.join(',  ') : 'undefine'}</TableCell>
+                        <TableCell  >
+                          <Box style={{display:"flex"}}><IconButton
                             onClick={() =>
                               handleEdit(page * rowsPerPage + index + 1)
                             }
@@ -165,7 +193,7 @@ const Listing = () => {
                             }
                           >
                             <DeleteIcon />
-                          </IconButton>
+                          </IconButton></Box>
                         </TableCell>
                       </TableRow>
                     );
@@ -183,7 +211,7 @@ const Listing = () => {
             onRowsPerPageChange={handleChangeRowsPerPage}
           />
         </Paper>
-      </Container>
+      </Box>
 
       {/* Delete Confirmation Dialog */}
       <Dialog
