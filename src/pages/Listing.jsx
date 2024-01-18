@@ -11,7 +11,6 @@ import {
   TablePagination,
   Button,
   IconButton,
-  Container,
   Typography,
   Dialog,
   DialogActions,
@@ -20,23 +19,25 @@ import {
   DialogTitle,
   Box,
   TextField,
+  Snackbar,
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
+import MuiAlert from "@mui/material/Alert";
 
 const columns = [
-  { id: "id", label: "ID", minWidth: 60 },
-  { id: "name", label: "Make", minWidth: 100 },
-  { id: "age", label: "Model", minWidth: 100 },
-  { id: "age", label: "Vehicle Identification No", minWidth: 170 },
-  { id: "age", label: "Engine No", minWidth: 100 },
-  { id: "age", label: "Vehicle Body Type", minWidth: 150 },
-  { id: "age", label: "Manufactured Year", minWidth: 150 },
-  { id: "age", label: "Transmission", minWidth: 100 },
-  { id: "age", label: "Odometer Reading", minWidth: 150 },
-  { id: "age", label: "Reg Expiry", minWidth: 100 },
-  { id: "age", label: "License Plate", minWidth: 100 },
-  { id: "age", label: "Wheelers", minWidth: 100 },
+  { id: "id", label: "ID", minWidth: 10 },
+  { id: "make", label: "Make", minWidth: 55 },
+  { id: "model", label: "Model", minWidth: 55 },
+  { id: "vin", label: "Vehicle Identification Number", minWidth: 210 },
+  { id: "engineNumber", label: "Engine Number", minWidth: 120 },
+  { id: "vehicleBodyType", label: "Vehicle Body Type", minWidth: 150 },
+  { id: "mnufacturedYear", label: "Manufactured Year", minWidth: 150 },
+  { id: "transmission", label: "Transmission", minWidth: 100 },
+  { id: "odometerReading", label: "Odometer Reading", minWidth: 150 },
+  { id: "regExpiry", label: "Reg Expiry", minWidth: 100 },
+  { id: "licensePlate", label: "License Plate", minWidth: 100 },
+  { id: "wheelers", label: "Wheelers", minWidth: 70 },
   // Add more columns as needed
 ];
 
@@ -47,30 +48,30 @@ const Listing = () => {
   const [tableData, setTableData] = useState([]);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedDeleteId, setSelectedDeleteId] = useState(null);
-  //  this state is use for searching the data
-  const [searchQuery, setSearchQuery] = useState("");
-  const [filteredData, setFilteredData] = useState(tableData);
+  const [serachVehicle, setSearchVehicle] = useState("");
+  const [filteredVehile, setFilteredVehicle] = useState(tableData);
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState("");
+  const [snackbarSeverity, setSnackbarSeverity] = useState("success");
 
   const handleSearchChange = (event) => {
     const { value } = event.target;
-    setSearchQuery(value);
+    setSearchVehicle(value);
   };
+
   useEffect(() => {
-    // Retrieve data from local storage or use default data
-    const storedData = JSON.parse(localStorage.getItem("formData"));
-    if (storedData) {
-      setTableData(storedData);
-    }
+    const vehiclesData = JSON.parse(localStorage.getItem("formData")) || [];
+    setTableData(vehiclesData);
   }, []);
+
   useEffect(() => {
-    // Filter the data based on search query
-    const filtered = tableData.filter((item) =>
-      Object.values(item).some((value) =>
-        value.toString().toLowerCase().includes(searchQuery.toLowerCase())
+    const filteredVehicle = tableData.filter((vehicle) =>
+      Object.values(vehicle).some((value) =>
+        value.toString().toLowerCase().includes(serachVehicle.toLowerCase())
       )
     );
-    setFilteredData(filtered);
-  }, [searchQuery, tableData]);
+    setFilteredVehicle(filteredVehicle);
+  }, [serachVehicle, tableData]);
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
@@ -80,6 +81,7 @@ const Listing = () => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
   };
+
   const handleEdit = (id) => {
     console.log(`Editing row with ID: ${id}`);
     navigate(`/addvehicle/${id}`);
@@ -93,11 +95,14 @@ const Listing = () => {
   const handleDeleteConfirm = () => {
     console.log(`Deleting row with ID: ${selectedDeleteId}`);
     const updatedData = tableData.filter(
-      (item, index) => index + 1 !== selectedDeleteId
+      (vehicle, index) => index + 1 !== selectedDeleteId
     );
     setTableData(updatedData);
     localStorage.setItem("formData", JSON.stringify(updatedData));
     setDeleteDialogOpen(false);
+
+    // Show Snackbar
+    showSnackbar("Vehicle successfully deleted ", "success");
   };
 
   const handleDeleteCancel = () => {
@@ -105,9 +110,22 @@ const Listing = () => {
     setSelectedDeleteId(null);
   };
 
+  const showSnackbar = (message, severity) => {
+    setSnackbarMessage(message);
+    setSnackbarSeverity(severity);
+    setSnackbarOpen(true);
+  };
+
+  const handleSnackbarClose = (event, action) => {
+    if (action === "clickaway") {
+      return;
+    }
+    setSnackbarOpen(false);
+  };
+
   return (
-    <div>
-      <Box sx={{ m: 5 }}>
+    <Box>
+      <Box sx={{ m: 2 }}>
         <Typography
           variant="h4"
           sx={{ my: 3 }}
@@ -116,17 +134,14 @@ const Listing = () => {
         >
           Vehicles List
         </Typography>
-
-        {/* Search Input Fields */}
         <Box sx={{ mb: 3 }}>
           <TextField
-            label="Search by Make"
+            label="Search "
             variant="outlined"
             size="small"
-            value={searchQuery}
+            value={serachVehicle}
             onChange={handleSearchChange}
           />
-          {/* Add more search fields for other columns as needed */}
         </Box>
         <Paper>
           <TableContainer
@@ -161,39 +176,47 @@ const Listing = () => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {filteredData
+                {filteredVehile
                   .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                  .map((item, index) => {
+                  .map((vehicle, index) => {
                     const rowNumber = index + 1 + page * rowsPerPage;
                     return (
-                      <TableRow key={rowNumber} >
+                      <TableRow key={rowNumber}>
                         <TableCell>{rowNumber}</TableCell>
-                        <TableCell>{item.make}</TableCell>
-                        <TableCell>{item.model}</TableCell>
-                        <TableCell>{item.vehicleIdentificationNo}</TableCell>
-                        <TableCell>{item.engineNo}</TableCell>
-                        <TableCell>{item.vehicleBodyType}</TableCell>
-                        <TableCell>{item.manufacturedYear}</TableCell>
-                        <TableCell>{item.transmission}</TableCell>
-                        <TableCell>{item.odometerReading}</TableCell>
-                        <TableCell>{item.regExpiry}</TableCell>
-                        <TableCell>{item.licensePlate}</TableCell>
-                        <TableCell >{item.wheeler ? item.wheeler.join(',  ') : 'undefine'}</TableCell>
-                        <TableCell  >
-                          <Box style={{display:"flex"}}><IconButton
-                            onClick={() =>
-                              handleEdit(page * rowsPerPage + index + 1)
-                            }
-                          >
-                            <EditIcon />
-                          </IconButton>
-                          <IconButton
-                            onClick={() =>
-                              handleDeleteClick(page * rowsPerPage + index + 1)
-                            }
-                          >
-                            <DeleteIcon />
-                          </IconButton></Box>
+                        <TableCell>{vehicle.make}</TableCell>
+                        <TableCell>{vehicle.model}</TableCell>
+                        <TableCell>{vehicle.vehicleIdentificationNumber}</TableCell>
+                        <TableCell>{vehicle.engineNumber}</TableCell>
+                        <TableCell>{vehicle.vehicleBodyType}</TableCell>
+                        <TableCell>{vehicle.manufacturedYear}</TableCell>
+                        <TableCell>{vehicle.transmission}</TableCell>
+                        <TableCell>{vehicle.odometerReading}</TableCell>
+                        <TableCell>{vehicle.regExpiry}</TableCell>
+                        <TableCell>{vehicle.licensePlate}</TableCell>
+                        <TableCell>
+                          {vehicle.wheeler
+                            ? vehicle.wheeler.join(",  ")
+                            : "undefine"}
+                        </TableCell>
+                        <TableCell>
+                          <Box style={{ display: "flex" }}>
+                            <IconButton
+                              onClick={() =>
+                                handleEdit(page * rowsPerPage + index + 1)
+                              }
+                            >
+                              <EditIcon />
+                            </IconButton>
+                            <IconButton
+                              onClick={() =>
+                                handleDeleteClick(
+                                  page * rowsPerPage + index + 1
+                                )
+                              }
+                            >
+                              <DeleteIcon />
+                            </IconButton>
+                          </Box>
                         </TableCell>
                       </TableRow>
                     );
@@ -213,7 +236,6 @@ const Listing = () => {
         </Paper>
       </Box>
 
-      {/* Delete Confirmation Dialog */}
       <Dialog
         open={deleteDialogOpen}
         onClose={handleDeleteCancel}
@@ -223,7 +245,7 @@ const Listing = () => {
         <DialogTitle id="alert-dialog-title">{"Confirm Delete"}</DialogTitle>
         <DialogContent>
           <DialogContentText id="alert-dialog-description">
-            Are you sure you want to delete this item?
+            Are you sure you want to delete this vehicle
           </DialogContentText>
         </DialogContent>
         <DialogActions>
@@ -235,7 +257,22 @@ const Listing = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </div>
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={3000}
+        onClose={handleSnackbarClose}
+        anchorOrigin={{ vertical: "top", horizontal: "right" }}
+      >
+        <MuiAlert
+          elevation={6}
+          variant="filled"
+          onClose={handleSnackbarClose}
+          severity={snackbarSeverity} // Use the severity from the state
+        >
+          {snackbarMessage}
+        </MuiAlert>
+      </Snackbar>
+    </Box>
   );
 };
 

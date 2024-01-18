@@ -18,24 +18,25 @@ const validationSchema = yup.object().shape({
     })
     .min(3, "Model should be at least 3 characters")
     .max(30, "Model should not exceed 30 characters"),
-  vehicleIdentificationNo: yup
+  vehicleIdentificationNumber: yup
     .string()
-    .required("Vehicle identification no is required")
+    .required("Vehicle identification number is required")
     .matches(/^[a-zA-Z0-9]+$/, {
-      message: "Vehicle identification no should contain alphabets & numbers",
+      message:
+        "Vehicle identification number should contain alphabets & numbers",
       excludeEmptyString: true,
     })
-    .min(3, "Vehicle identification no should be at least 3 characters")
-    .max(30, "Vehicle identification no should not exceed 30 characters"),
-  engineNo: yup
+    .min(3, "Vehicle identification number should be at least 3 characters")
+    .max(30, "Vehicle identification number should not exceed 30 characters"),
+  engineNumber: yup
     .string()
-    .required("Engine no is required")
+    .required("Engine number is required")
     .matches(/^[a-zA-Z0-9]+$/, {
-      message: "Engine no should contain alphabets & numbers",
+      message: "Engine number should contain alphabets & numbers",
       excludeEmptyString: true,
     })
-    .min(3, "Engine no should be at least 3 characters")
-    .max(30, "Engine no should not exceed 30 characters"),
+    .min(3, "Engine number should be at least 3 characters")
+    .max(30, "Engine number should not exceed 30 characters"),
   vehicleBodyType: yup
     .string()
     .notOneOf(["0"], "Vehicle body type is required")
@@ -61,7 +62,7 @@ const validationSchema = yup.object().shape({
     .string()
     .required("Reg expiry is required")
     .test("future-date", "Reg expiry only future date", function (value) {
-      if (!value) return true; // If no date selected, it's valid
+      if (!value) return true; // If number date selected, it's valid
       const selectedDate = new Date(value);
       const currentDate = new Date();
       currentDate.setHours(0, 0, 0, 0);

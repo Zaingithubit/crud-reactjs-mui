@@ -3,6 +3,7 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import AddVehicle from "./pages/AddVehicle";
 import Listing from "./pages/Listing";
 import Navbar from "./components/NaveBar";
+import Footer from "./components/Footer";
 import ErrorPage from "./pages/ErrorPage";
 
 function App() {
@@ -16,6 +17,7 @@ function App() {
         <Route path="/listing" element={<Listing />} />
         <Route path="*" element={<ErrorPage />} />
       </Routes>
+      <Footer />
     </BrowserRouter>
   );
 }

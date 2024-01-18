@@ -1,4 +1,8 @@
+import { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { yupResolver } from "@hookform/resolvers/yup";
 import { Controller, useForm } from "react-hook-form";
+import dayjs from "dayjs";
 import Snackbar from "@mui/material/Snackbar";
 import MuiAlert from "@mui/material/Alert";
 import {
@@ -16,23 +20,19 @@ import {
   Checkbox,
   FormGroup,
   Radio,
-  FormLabel,
   RadioGroup,
   TextareaAutosize,
   FormHelperText,
 } from "@mui/material";
 import VehicleDataValidation from "../validation/VehicleValidation";
-import { yupResolver } from "@hookform/resolvers/yup";
-import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-
+import style from "./vehicle.module.css";
 const VehicleForm = () => {
-  const { id } = useParams(); // Get the ID from the URL parameters
-  const [formDataArray, setFormDataArray] = useState([]);
-  const [editData, setEditData] = useState(null);
-  const navigate = useNavigate();
+  const { id } = useParams(""); // Get the ID from the URL parameters
+  const [VehiclesFormData, setVehiclesFormData] = useState([]);
+  const [vehicleEdit, setVehicleEdit] = useState(null);
+  const navigate = useNavigate("");
   const [snackbarOpen, setSnackbarOpen] = useState(false);
-  const [successMessage, setSuccessMessage] = useState();
+  const [successMessage, setSuccessMessage] = useState("");
   const [severity, setSeverity] = useState(null);
   const {
     control,
@@ -45,58 +45,48 @@ const VehicleForm = () => {
   } = useForm({
     resolver: yupResolver(VehicleDataValidation),
   });
+
   const manufacturedYear = watch("manufacturedYear");
   const vehicleBodyType = watch("vehicleBodyType");
   const transmission = watch("transmission");
   const wheeler = watch("wheeler");
   const isAgree = watch("isAgree");
+
   useEffect(() => {
-    const storedData = JSON.parse(localStorage.getItem("formData")) || [];
-    setFormDataArray(storedData);
+    const vehicleData = JSON.parse(localStorage.getItem("formData")) || [];
+    setVehiclesFormData(vehicleData);
     // Check if ID is provided in the URL (edit case)
     if (id) {
-      const editFormData = storedData.find(
-        (data, index) => index === parseInt(id - 1, 10)
+      const editVehicleData = vehicleData.find(
+        (vehicle, index) => index === parseInt(id - 1, 10)
       );
-      if (!editFormData) {
+      if (!editVehicleData) {
         // Show an alert if ID is greater than available data
-        if (parseInt(id, 10) > storedData.length) {
-          showSnackbar("Invalid ID !, ID exceeds available data.", "error");
+        if (parseInt(id, 10) > vehicleData.length) {
+          showSnackbar("Vehicle does not exist ", "error");
           const snackbarDuration = 2000;
+
           setTimeout(() => {
             navigate("/addvehicle");
           }, snackbarDuration);
         }
         // Redirect to error page if ID is negative
         if (parseInt(id, 10) <= 0) {
-          navigate("/error"); // Update this path based on your error page route
+          navigate(`/error`); // Update this path based on your error page route
         }
       }
-      if (editFormData) {
-        setEditData(editFormData);
+      if (editVehicleData) {
+        setVehicleEdit(editVehicleData);
         // Use setValue to set the form values
-        Object.keys(editFormData).forEach((key) => {
-          if (
-            key === "wheeler_4" ||
-            key === "wheeler_3" ||
-            key === "wheeler_2"
-          ) {
-            setValue(key, editFormData[key]);
-          } else if (key === "radioButtonsGroup") {
-            setValue(key, editFormData[key]);
-          } else {
-            setValue(key, editFormData[key]);
-          }
+        Object.keys(editVehicleData).forEach((key) => {
+          setValue(key, editVehicleData[key]);
         });
-      } else {
-        // If the ID doesn't match any data, you might want to handle it here
-        console.log(`No data found for ID: ${id}`);
       }
     }
   }, [id, setValue]);
 
-  const handleSnackbarClose = (event, reason) => {
-    if (reason === "clickaway") {
+  const handleSnackbarClose = (event, action) => {
+    if (action === "clickaway") {
       return;
     }
     setSnackbarOpen(false);
@@ -108,50 +98,49 @@ const VehicleForm = () => {
     setSeverity(severity);
     setTimeout(() => {
       // Navigate to the listing page after 2000 milliseconds (2 seconds)
-      navigate("/listing");
+      navigate(`/listing`);
     }, 2000);
   };
 
-  const onSubmit = (data) => {
+  const onSubmit = (vehicle) => {
+    let message = "";
+    let vehiclesData = [];
     if (Object.keys(errors).length === 0) {
-      if (editData) {
-        const updatedDataArray = formDataArray.map((item, index) =>
-          index === parseInt(id - 1, 10) ? { ...item, ...data } : item
+      if (vehicleEdit) {
+        vehiclesData = VehiclesFormData.map((singleVehicle, index) =>
+          index === parseInt(id - 1, 10)
+            ? { ...singleVehicle, ...vehicle }
+            : singleVehicle
         );
-        localStorage.setItem("formData", JSON.stringify(updatedDataArray));
-        setFormDataArray(updatedDataArray);
-        showSnackbar("Form is successfully updated !", "info");
+        message = "Vehicle updated successfully ";
       } else {
-        const newDataArray = [
-          ...formDataArray,
-          {...data },
-        ];
-        localStorage.setItem("formData", JSON.stringify(newDataArray));
-        setFormDataArray(newDataArray);
-        showSnackbar("Form is successfully submitted !", "success");
+        vehiclesData = [...VehiclesFormData, { ...vehicle }];
+        message = "Vehicle created successfully ";
       }
-    } else {
-      alert("Please fix the errors in the form before submitting.");
     }
+    localStorage.setItem("formData", JSON.stringify(vehiclesData));
+    setVehiclesFormData(vehiclesData);
+    showSnackbar(message, "success");
   };
 
   const handleClear = () => {
     // Use the reset function to clear the form values and errors
     reset();
   };
+  
+  const inputLabelStyles = {
+    fontWeight: "600",
+    "&::after": {
+      content: "'*'",
+      color: "red",
+      marginLeft: "4px",
+    },
+  };
 
   return (
     <>
-      <Container component="main" style={{ marginTop: 20 }}>
-        <Paper
-          elevation={3}
-          style={{
-            padding: 20,
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-          }}
-        >
+      <Container component="main" sx={{ marginTop: 5 }}>
+        <Paper elevation={3} className={style.inputFields}>
           <Typography
             fontWeight="700"
             fontSize="30px"
@@ -160,14 +149,11 @@ const VehicleForm = () => {
           >
             Add Vehicle
           </Typography>
-          <form onSubmit={handleSubmit(onSubmit)} style={{ maxWidth: "100%" }}>
+          <form onSubmit={handleSubmit(onSubmit)} className={style.formWidth}>
             <Grid container spacing={2}>
               <Grid item xs={12} md={6}>
-                <InputLabel sx={{ fontWeight: "600" }} htmlFor="Make">
+                <InputLabel sx={inputLabelStyles} htmlFor="Make">
                   Make
-                  <Typography component="span" color="red">
-                    *
-                  </Typography>
                 </InputLabel>
                 <TextField
                   fullWidth
@@ -182,14 +168,11 @@ const VehicleForm = () => {
               </Grid>
               <Grid item xs={12} md={6}>
                 <InputLabel
-                  sx={{ fontWeight: "600" }}
+                  sx={inputLabelStyles}
                   id="model-label"
                   htmlFor="Model"
                 >
                   Model
-                  <Typography component="span" color="red">
-                    *
-                  </Typography>
                 </InputLabel>
                 <TextField
                   labelid="model-label"
@@ -205,58 +188,47 @@ const VehicleForm = () => {
               </Grid>
               <Grid item xs={12} md={6}>
                 <InputLabel
-                  sx={{ fontWeight: "600" }}
-                  htmlFor="vehicle-identification-no"
+                  sx={inputLabelStyles}
+                  htmlFor="vehicle-identification-number"
                 >
                   Vehicle Identification No
-                  <Typography component="span" color="red">
-                    *
-                  </Typography>
                 </InputLabel>
                 <TextField
                   fullWidth
-                  id="vehicle-identification-no"
-                  {...register("vehicleIdentificationNo")}
+                  id="vehicle-identification-number"
+                  {...register("vehicleIdentificationNumber")}
                   type="text"
-                  error={errors.vehicleIdentificationNo ? true : false}
+                  error={errors.vehicleIdentificationNumber ? true : false}
                 />
-                {errors.vehicleIdentificationNo && (
+                {errors.vehicleIdentificationNumber && (
                   <FormHelperText error>
-                    {errors.vehicleIdentificationNo.message}
+                    {errors.vehicleIdentificationNumber.message}
                   </FormHelperText>
                 )}
               </Grid>
               <Grid item xs={12} md={6}>
-                <InputLabel sx={{ fontWeight: "600" }} htmlFor="engine-no">
-                  Engine No
-                  <Typography component="span" color="red">
-                    *
-                  </Typography>
+                <InputLabel sx={inputLabelStyles} htmlFor="engine-number">
+                  Engine Number
                 </InputLabel>
                 <TextField
                   fullWidth
-                  id="engine-no"
+                  id="engine-number"
                   type="text"
-                  {...register("engineNo")}
-                  error={errors.engineNo ? true : false}
+                  {...register("engineNumber")}
+                  error={errors.engineNumber ? true : false}
                 />
-                {errors.engineNo && (
+                {errors.engineNumber && (
                   <FormHelperText error>
-                    {errors.engineNo.message}
+                    {errors.engineNumber.message}
                   </FormHelperText>
                 )}
               </Grid>
               <Grid item xs={12} md={6}>
-                <InputLabel
-                  sx={{ fontWeight: "600" }}
-                  id="vehicle-body-type-label"
-                >
+                <InputLabel sx={inputLabelStyles} id="vehicle-body-type-label">
                   Vehicle Body Type
-                  <Typography component="span" color="red">
-                    *
-                  </Typography>
                 </InputLabel>
                 <Select
+                  labelId="vehicle-body-type-label"
                   fullWidth
                   defaultValue={0}
                   value={vehicleBodyType ? vehicleBodyType : 0}
@@ -279,18 +251,12 @@ const VehicleForm = () => {
                 )}
               </Grid>
               <Grid item xs={12} md={6}>
-                <InputLabel
-                  sx={{ fontWeight: "600" }}
-                  id="manufactured-year-label"
-                >
+                <InputLabel sx={inputLabelStyles} id="manufactured-year-label">
                   Manufactured Year
-                  <Typography component="span" color="red">
-                    *
-                  </Typography>
                 </InputLabel>
                 <Select
                   fullWidth
-                  labelid="manufactured-year-label"
+                  labelId="manufactured-year-label"
                   id="manufactured-year"
                   defaultValue={0}
                   value={manufacturedYear ? manufacturedYear : 0}
@@ -313,17 +279,14 @@ const VehicleForm = () => {
                 )}
               </Grid>
               <Grid item xs={12} md={6}>
-                <InputLabel sx={{ fontWeight: "600" }} id="transmission-label">
+                <InputLabel sx={inputLabelStyles} id="transmission-label">
                   Transmission
-                  <Typography component="span" color="red">
-                    *
-                  </Typography>
                 </InputLabel>
                 <Select
                   fullWidth
                   defaultValue={0}
                   value={transmission ? transmission : 0}
-                  labelid="transmission-label"
+                  labelId="transmission-label"
                   id="transmission"
                   {...register("transmission")}
                   error={errors.transmission ? true : false}
@@ -341,12 +304,7 @@ const VehicleForm = () => {
                 )}
               </Grid>
               <Grid item xs={12} md={6}>
-                <InputLabel sx={{ fontWeight: "600" }}>
-                  Odometer Reading
-                  <Typography component="span" color="red">
-                    *
-                  </Typography>
-                </InputLabel>
+                <InputLabel sx={inputLabelStyles}>Odometer Reading</InputLabel>
                 <TextField
                   variant="outlined"
                   fullWidth
@@ -362,11 +320,8 @@ const VehicleForm = () => {
                 )}
               </Grid>
               <Grid item xs={12} md={6}>
-                <InputLabel sx={{ fontWeight: "600" }} htmlFor="reg-expiry">
+                <InputLabel sx={inputLabelStyles} htmlFor="reg-expiry">
                   Reg Expiry
-                  <Typography component="span" color="red">
-                    *
-                  </Typography>
                 </InputLabel>
                 <TextField
                   fullWidth
@@ -376,7 +331,7 @@ const VehicleForm = () => {
                   error={errors.regExpiry ? true : false}
                   inputProps={{
                     shrink: true,
-                    min: new Date().toISOString().split("T")[0], // Set min to current date
+                    min: dayjs().format("YYYY-MM-DD"),
                   }}
                 />
                 {errors.regExpiry && (
@@ -386,11 +341,8 @@ const VehicleForm = () => {
                 )}
               </Grid>
               <Grid item xs={12} md={6}>
-                <InputLabel sx={{ fontWeight: "600" }} htmlFor="license-plate">
+                <InputLabel sx={inputLabelStyles} htmlFor="license-plate">
                   License Plate
-                  <Typography component="span" color="red">
-                    *
-                  </Typography>
                 </InputLabel>
                 <TextField
                   variant="outlined"
@@ -407,7 +359,7 @@ const VehicleForm = () => {
                 )}
               </Grid>
 
-              <Grid item xs={12} style={{ paddingTop: 0 }}>
+              <Grid item xs={12}>
                 <FormGroup row>
                   <Typography
                     variant="body1"
@@ -490,11 +442,7 @@ const VehicleForm = () => {
                       <TextareaAutosize
                         {...field}
                         rows={4}
-                        style={{
-                          width: "100%",
-                          resize: "none",
-                          minHeight: "100px",
-                        }}
+                        className={style.textArea}
                       />
                     )}
                   />
@@ -515,12 +463,18 @@ const VehicleForm = () => {
                       />
                     }
                     label={
-                      <span>
+                      <Typography
+                        component="span"
+                        sx={{
+                          "&::after": {
+                            content: "'*'",
+                            color: "red",
+                            marginLeft: "4px",
+                          },
+                        }}
+                      >
                         I agree to the terms & condition
-                        <Typography component="span" style={{ color: "red" }}>
-                          *
-                        </Typography>
-                      </span>
+                      </Typography>
                     }
                   />
                   {errors.isAgree && (
@@ -535,35 +489,36 @@ const VehicleForm = () => {
               type="submit"
               variant="contained"
               color="primary"
-              style={{ marginTop: 20, float: "right" }}
+              className={style.btn}
             >
               Submit
             </Button>
-            <Snackbar
-              open={snackbarOpen}
-              autoHideDuration={6000}
-              onClose={handleSnackbarClose}
-              anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
-            >
-              <MuiAlert
-                elevation={6}
-                variant="filled"
-                onClose={handleSnackbarClose}
-                severity={severity} // Use the severity from the state
-              >
-                {successMessage}
-              </MuiAlert>
-            </Snackbar>
             <Button
+              sx={{ marginRight: "10px" }}
               type="button"
               variant="contained"
               color="warning"
-              style={{ marginTop: 20, float: "right", marginRight: "20px" }}
+              className={style.btn}
               onClick={handleClear} // Add onClick handler for clear button
             >
               Clear
             </Button>
           </form>
+          <Snackbar
+            open={snackbarOpen}
+            autoHideDuration={6000}
+            onClose={handleSnackbarClose}
+            anchorOrigin={{ vertical: "top", horizontal: "right" }}
+          >
+            <MuiAlert
+              elevation={6}
+              variant="filled"
+              onClose={handleSnackbarClose}
+              severity={severity} // Use the severity from the state
+            >
+              {successMessage}
+            </MuiAlert>
+          </Snackbar>
         </Paper>
       </Container>
     </>

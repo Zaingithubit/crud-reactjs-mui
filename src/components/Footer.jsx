@@ -3,7 +3,6 @@ import { Typography, Container, Paper } from "@mui/material";
 
 const Footer = () => {
   return (
-    <footer>
       <Paper elevation={3} style={{ padding: 20, marginTop: 90 }}>
         <Container>
           <Typography
@@ -16,7 +15,6 @@ const Footer = () => {
           </Typography>
         </Container>
       </Paper>
-    </footer>
   );
 };
 
